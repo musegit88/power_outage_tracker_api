@@ -1,0 +1,102 @@
+generator client {
+  provider        = "prisma-client"
+  output          = "../src/generated/prisma"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  extensions = [postgis(schema: "public")]
+}
+
+model User {
+  id            String         @id @default(cuid())
+  email         String         @unique
+  name          String
+  password      String
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  phoneNumber   String
+  comments      Comment[]
+  confirmations Confirmation[]
+  outages       Outage[]
+
+  @@map("users")
+}
+
+model Outage {
+  id                     String                    @id @default(cuid())
+  userId                 String
+  locationName           String
+  description            String
+  latitude               Float
+  longitude              Float
+  affectedHomesEstimated Int?
+  status                 OutageStatus              @default(ACTIVE)
+  severity               OutageSeverity            @default(MODERATE)
+  createdAt              DateTime                  @default(now())
+  updatedAt              DateTime                  @updatedAt
+  resolvedAt             DateTime?
+  coordinates            Unsupported("geography")?
+  comments               Comment[]
+  confirmations          Confirmation[]
+  user                   User                      @relation(fields: [userId], references: [id])
+
+  @@index([createdAt(sort: Desc)])
+  @@index([latitude, longitude])
+  @@index([status])
+  @@index([userId])
+  @@index([coordinates], map: "idx_outages_coordinates", type: Gist)
+  @@map("outages")
+}
+
+model Confirmation {
+  id        String   @id @default(cuid())
+  outageId  String
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  outage    Outage   @relation(fields: [outageId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([outageId, userId])
+  @@index([outageId])
+  @@index([userId])
+  @@map("confirmations")
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  outageId  String
+  userId    String
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  outage    Outage   @relation(fields: [outageId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([outageId])
+  @@index([userId])
+  @@map("comments")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model spatial_ref_sys {
+  srid      Int     @id
+  auth_name String? @db.VarChar(256)
+  auth_srid Int?
+  srtext    String? @db.VarChar(2048)
+  proj4text String? @db.VarChar(2048)
+}
+
+enum OutageStatus {
+  ACTIVE
+  RESOLVED
+  INVESTIGATING
+}
+
+enum OutageSeverity {
+  MINOR
+  MODERATE
+  SEVERE
+}
