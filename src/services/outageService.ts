@@ -1,6 +1,7 @@
 import prisma from "../config/database";
 import { OutageStatus } from "../generated/prisma/enums";
-import { CreateOutage, OutageWithDistance } from "../types";
+import { CreateOutage, OutageWithDistance, RateLimitType } from "../types";
+import rateLimitService from "./rateLimitService";
 
 export class OutageService {
   // Check if there are active outages within a given radius
@@ -37,6 +38,19 @@ export class OutageService {
   }
   // create outage
   async createOutage(outageData: CreateOutage) {
+    // check rate limit before creating outage
+    const rateLimitStatus = await rateLimitService.checkRateLimit(
+      outageData.userId,
+      RateLimitType.OUTAGE,
+    );
+
+    if (!rateLimitStatus.allowed) {
+      // Throw error with rate limit status
+      const error = new Error("Rate limit exceeded");
+      (error as any).rateLimitStatus = rateLimitStatus;
+      throw error;
+    }
+
     // check if there are active outages within a given radius before creating outage
     const { exists, nearbyOutages } = await this.hasNearbyActiveOutage(
       outageData.latitude,
@@ -74,7 +88,11 @@ export class OutageService {
         },
       },
     });
-
+    // Record the action for rate limiting
+    await rateLimitService.recordAction(
+      outageData.userId,
+      RateLimitType.OUTAGE,
+    );
     return outage;
   }
 
@@ -214,6 +232,18 @@ export class OutageService {
   }
 
   async addConfirmation(outageId: string, userId: string) {
+    // check rate limit before confirming outage
+    const rateLimitStatus = await rateLimitService.checkRateLimit(
+      userId,
+      RateLimitType.CONFIRMATION,
+    );
+
+    if (!rateLimitStatus.allowed) {
+      const error = new Error("Rate limit exceeded");
+      (error as any).rateLimitStatus = rateLimitStatus;
+      throw error;
+    }
+
     // check if user has already confirmed the outage
     const existingConfirmation = await prisma.confirmation.findUnique({
       where: {
@@ -236,6 +266,8 @@ export class OutageService {
       },
     });
 
+    // Record the action for rate limiting
+    await rateLimitService.recordAction(userId, RateLimitType.CONFIRMATION);
     return confirmation;
   }
 

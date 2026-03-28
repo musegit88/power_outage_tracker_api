@@ -1,6 +1,7 @@
+import rateLimitService from "../services/rateLimitService";
 import { OutageStatus } from "../generated/prisma/enums";
 import outageService from "../services/outageService";
-import { CreateOutage, OutageWithDistance } from "../types";
+import { CreateOutage, OutageWithDistance, RateLimitStatus } from "../types";
 import { Request, Response } from "express";
 
 export class OutageController {
@@ -14,6 +15,16 @@ export class OutageController {
         outage,
       });
     } catch (error) {
+      if (error instanceof Error && error.message === "Rate limit exceeded") {
+        const rateLimitStatus = (error as any)
+          .rateLimitStatus as RateLimitStatus;
+        return res.status(429).json({
+          error: "Rate limit exceeded",
+          message: rateLimitStatus.message,
+          resetAt: rateLimitStatus.resetAt,
+          remaining: rateLimitStatus.remaining,
+        });
+      }
       if (
         error instanceof Error &&
         error.message === "Outage already exists nearby"
@@ -131,6 +142,16 @@ export class OutageController {
         confirmation,
       });
     } catch (error) {
+      if (error instanceof Error && error.message === "Rate limit exceeded") {
+        const rateLimitStatus = (error as any)
+          .rateLImitStatus as RateLimitStatus;
+        return res.status(429).json({
+          error: "Rate limit exceeded",
+          message: rateLimitStatus.message,
+          resetAt: rateLimitStatus.resetAt,
+          remaining: rateLimitStatus.remaining,
+        });
+      }
       if (
         error instanceof Error &&
         error.message === "Already confirmed this outage"
@@ -160,6 +181,31 @@ export class OutageController {
     } catch (error) {
       console.error("Error getting statistics:", error);
       return res.status(500).json({ error: "Failed to fetch statistics" });
+    }
+  }
+
+  // Get rate limit status
+  async getRateLimitStatus(req: Request, res: Response) {
+    try {
+      const { userId } = req.params;
+      const status = await rateLimitService.getRateLimitStatus(
+        userId.toString(),
+      );
+      return res.json({
+        outage: {
+          remaining: status.outage.remaining,
+          resetAt: status.outage.resetAt,
+        },
+        confirmation: {
+          remaining: status.confirmation.remaining,
+          resetAt: status.confirmation.resetAt,
+        },
+      });
+    } catch (error) {
+      console.error("Error getting rate limit status:", error);
+      return res
+        .status(500)
+        .json({ error: "Failed to fetch rate limit status" });
     }
   }
 }

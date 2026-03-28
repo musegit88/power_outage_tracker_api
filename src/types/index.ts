@@ -30,3 +30,28 @@ export interface OutageWithDistance {
   createdAt: Date;
   distanceKm: number;
 }
+
+// rate limit type
+
+export interface RateLimitConfig {
+  outage: {
+    maxPerHour: number;
+    maxPerDay: number;
+  };
+  confirmation: {
+    maxPerHour: number;
+    maxPerDay: number;
+  };
+}
+
+export interface RateLimitStatus {
+  allowed: boolean;
+  remaining: number;
+  resetAt: Date;
+  message?: string;
+}
+
+export enum RateLimitType {
+  OUTAGE = "outage",
+  CONFIRMATION = "confirmation",
+}
