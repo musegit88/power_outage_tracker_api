@@ -42,5 +42,10 @@ router.patch(
 );
 router.post("/:id/confirm", authenticate, outageController.addConfirmation);
 router.delete("/:id", authenticate, outageController.deleteOutage);
+router.get(
+  "/rate-limit/:userId",
+  authenticate,
+  outageController.getRateLimitStatus,
+);
 
 export default router;
