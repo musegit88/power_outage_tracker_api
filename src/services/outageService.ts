@@ -203,6 +203,7 @@ export class OutageService {
     SELECT 
       o.id,
       o."locationName",
+      o.description,
       o.latitude,
       o.longitude,
       o.status,
@@ -211,7 +212,6 @@ export class OutageService {
     FROM outages o
     LEFT JOIN confirmations c ON o.id = c."outageId"
     WHERE o.coordinates && ST_MakeEnvelope(${swLng}, ${swLat}, ${neLng}, ${neLat}, 4326)::geography
-    AND o.status = ${OutageStatus.ACTIVE}
     GROUP BY o.id
      `;
 
