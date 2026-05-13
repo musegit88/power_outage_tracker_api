@@ -8,15 +8,29 @@ import outageRoutes from "./routes/outage.routes";
 import { limiter } from "./middleware/limiter.middleware";
 import fs from "node:fs";
 import path from "node:path";
+import { createServer } from "http";
+import socketService from "./socket";
 
 dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 3004;
 
+// Create HTTP server
+const httpServer = createServer(app);
+
+// Intialize Socket.io
+const io = socketService.init(httpServer);
+
 // Security middleware
-app.use(helmet());
 app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+    contentSecurityPolicy: false,
+  }),
+);
+app.use(
+  // TODO: update this for production
   cors({
     origin: "*",
     credentials: true,
@@ -51,6 +65,9 @@ if (process.env.NODE_ENV === "development") {
   });
 }
 
+// Make io accessible in routes
+app.set("io", io);
+
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/outages", outageRoutes);
@@ -65,6 +82,16 @@ app.get("/health", (req, res) => {
   });
 });
 
+// Socket.io health check
+// @ts-ignore
+app.get("/socket-health", (req, res) => {
+  res.json({
+    status: "ok",
+    connections: io.engine.clientsCount,
+    rooms: Array.from(io.sockets.adapter.rooms.keys()),
+  });
+});
+
 // Route not found/404 handler
 //@ts-ignore
 app.use((req, res) => {
@@ -73,7 +100,8 @@ app.use((req, res) => {
   });
 });
 
-app.listen(port, () => {
+httpServer.listen(port, () => {
   console.log(`Server is running on port ${port}`);
   console.log(`Environment: ${process.env.NODE_ENV || "development"}`);
+  console.log(`WebSocket server ready`);
 });

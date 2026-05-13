@@ -2,6 +2,7 @@ import prisma from "../config/database";
 import { OutageStatus } from "../generated/prisma/enums";
 import { CreateOutage, OutageWithDistance, RateLimitType } from "../types";
 import rateLimitService from "./rateLimitService";
+import socketService from "../socket";
 
 export class OutageService {
   // Check if there are active outages within a given radius
@@ -93,6 +94,9 @@ export class OutageService {
       outageData.userId,
       RateLimitType.OUTAGE,
     );
+
+    // Emit REAL-TIME EVENT
+    await socketService.broadcastNewOutage(outage);
     return outage;
   }
 
@@ -227,7 +231,17 @@ export class OutageService {
         status,
         resolvedAt: status === OutageStatus.RESOLVED ? new Date() : null,
       },
+      include: {
+        _count: {
+          select: {
+            confirmations: true,
+          },
+        },
+      },
     });
+
+    // Emit REAL-TIME EVENT
+    await socketService.broadcastOutageStatusChange(outage);
     return outage;
   }
 
@@ -264,10 +278,25 @@ export class OutageService {
         outageId,
         userId: userId,
       },
+      include: {
+        outage: {
+          include: {
+            _count: {
+              select: {
+                confirmations: true,
+              },
+            },
+          },
+        },
+      },
     });
 
     // Record the action for rate limiting
     await rateLimitService.recordAction(userId, RateLimitType.CONFIRMATION);
+
+    // Emit REAL-TIME EVENT
+    await socketService.broadcatOutageConfirmation(confirmation.outage);
+
     return confirmation;
   }
 
@@ -280,15 +309,23 @@ export class OutageService {
   }
 
   async getStatistics() {
-    const [activeCount, resolvedCount, totalCount] = await Promise.all([
-      prisma.outage.count({ where: { status: OutageStatus.ACTIVE } }),
-      prisma.outage.count({ where: { status: OutageStatus.RESOLVED } }),
-      prisma.outage.count(),
-    ]);
+    const [activeCount, resolvedCount, resolvedTodayCount, totalCount] =
+      await Promise.all([
+        prisma.outage.count({ where: { status: OutageStatus.ACTIVE } }),
+        prisma.outage.count({ where: { status: OutageStatus.RESOLVED } }),
+        prisma.outage.count({
+          where: {
+            status: OutageStatus.RESOLVED,
+            resolvedAt: { lte: new Date() },
+          },
+        }),
+        prisma.outage.count(),
+      ]);
 
     return {
       activeCount,
       resolvedCount,
+      resolvedTodayCount,
       totalCount,
     };
   }
