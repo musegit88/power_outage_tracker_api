@@ -316,7 +316,7 @@ export class OutageService {
         prisma.outage.count({
           where: {
             status: OutageStatus.RESOLVED,
-            resolvedAt: { lte: new Date() },
+            resolvedAt: { gte: new Date(new Date().setHours(0, 0, 0, 0)) },
           },
         }),
         prisma.outage.count(),
