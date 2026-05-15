@@ -17,6 +17,7 @@ model User {
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   phoneNumber   String
+  role          UserRole       @default(USER)
   comments      Comment[]
   confirmations Confirmation[]
   outages       Outage[]
@@ -120,4 +121,10 @@ enum OutageSeverity {
   MINOR
   MODERATE
   SEVERE
+}
+
+enum UserRole {
+  USER
+  ADMIN
+  SUPER_ADMIN
 }

@@ -26,6 +26,7 @@ export const authenticate = async (
         email: true,
         name: true,
         phoneNumber: true,
+        role: true,
         createdAt: true,
         updatedAt: true,
       },

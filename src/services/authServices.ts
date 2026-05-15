@@ -1,3 +1,4 @@
+import { UserRole } from "../generated/prisma/enums";
 import prisma from "../config/database";
 import bcrypt from "bcrypt";
 import jwt, { JwtPayload } from "jsonwebtoken";
@@ -9,9 +10,10 @@ export class AuthServices {
     .JWT_EXPIRES_IN as jwt.SignOptions["expiresIn"];
 
   // generate token
-  generateToken(userId: string) {
+  generateToken(userId: string, role: UserRole) {
     const payload: JwtPayload = {
       userId,
+      role,
     };
     return jwt.sign(payload, this.JWT_SECRET, {
       expiresIn: this.JWT_EXPIRES_IN,
@@ -61,12 +63,13 @@ export class AuthServices {
         password: passwordHash,
         phoneNumber,
         name,
+        role: UserRole.USER,
       },
     });
 
     // generate token
 
-    const token = this.generateToken(user.id);
+    const token = this.generateToken(user.id, user.role);
 
     return {
       user,
@@ -93,7 +96,7 @@ export class AuthServices {
     }
 
     // Generate token
-    const token = this.generateToken(user.id);
+    const token = this.generateToken(user.id, user.role);
 
     return {
       user: {
@@ -101,6 +104,7 @@ export class AuthServices {
         email: user.email,
         name: user.name,
         phoneNumber: user.phoneNumber,
+        role: user.role,
       },
       token,
     };

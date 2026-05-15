@@ -58,6 +58,7 @@ export class AuthController {
           email: true,
           name: true,
           phoneNumber: true,
+          role: true,
           createdAt: true,
           updatedAt: true,
         },
