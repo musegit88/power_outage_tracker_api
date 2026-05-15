@@ -31,6 +31,7 @@ model Outage {
   userId                 String
   locationName           String
   description            String
+  whatHappened           OutageWhatHappened        @default(NO_POWER)
   latitude               Float
   longitude              Float
   affectedHomesEstimated Int?
@@ -127,4 +128,13 @@ enum UserRole {
   USER
   ADMIN
   SUPER_ADMIN
+}
+
+enum OutageWhatHappened {
+  NO_POWER
+  PARTIAL_POWER
+  LOW_VOLTAGE
+  FLICKERING
+  HAZARDOUS_SITUATION
+  OTHER
 }

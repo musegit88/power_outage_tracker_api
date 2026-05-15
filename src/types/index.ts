@@ -1,5 +1,9 @@
 import { User } from "@/generated/prisma/client";
-import { OutageSeverity, OutageStatus } from "@/generated/prisma/enums";
+import {
+  OutageSeverity,
+  OutageStatus,
+  OutageWhatHappened,
+} from "@/generated/prisma/enums";
 import { Request } from "express";
 
 export interface AuthRequest extends Request {
@@ -12,6 +16,7 @@ export interface CreateOutage {
   description: string;
   latitude: number;
   longitude: number;
+  whatHappened: OutageWhatHappened;
   affectedHomesEstimated?: number;
   status?: OutageStatus;
   severity?: OutageSeverity;
@@ -27,6 +32,7 @@ export interface OutageWithDistance {
   severity: OutageSeverity;
   confirmationCount: number;
   affectedHomesEstimated: number | null;
+  whatHappened: OutageWhatHappened;
   createdAt: Date;
   distanceKm: number;
 }

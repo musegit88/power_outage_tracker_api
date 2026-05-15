@@ -71,6 +71,7 @@ export class OutageService {
         latitude: parseFloat(outageData.latitude.toString()),
         longitude: parseFloat(outageData.longitude.toString()),
         affectedHomesEstimated: outageData.affectedHomesEstimated,
+        whatHappened: outageData.whatHappened,
         status: outageData.status,
         severity: outageData.severity,
       },

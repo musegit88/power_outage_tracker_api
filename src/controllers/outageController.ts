@@ -43,6 +43,7 @@ export class OutageController {
             status: outage.status,
             severity: outage.severity,
             affectedHomesEstimated: outage.affectedHomesEstimated,
+            whatHappened: outage.whatHappened,
             createdAt: outage.createdAt,
           })),
         });
