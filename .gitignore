@@ -9,4 +9,5 @@ node_modules
 /.vscode
 /docs
 /tests
+/src/seed
 test-api.http
