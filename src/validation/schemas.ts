@@ -1,4 +1,8 @@
-import { OutageSeverity, OutageStatus } from "../generated/prisma/enums";
+import {
+  ConsentType,
+  OutageSeverity,
+  OutageStatus,
+} from "../generated/prisma/enums";
 import { z } from "zod";
 
 export const regiterSchema = z.object({
@@ -13,6 +17,12 @@ export const regiterSchema = z.object({
       .string()
       .min(2, "Name must be at least 2 characters")
       .max(24, "Name must be at most 24 characters"),
+    consents: z.array(
+      z.object({
+        consentType: z.enum(ConsentType),
+        accepted: z.boolean(),
+      }),
+    ),
   }),
 });
 

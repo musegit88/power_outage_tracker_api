@@ -22,8 +22,41 @@ model User {
   confirmations Confirmation[]
   outages       Outage[]
   rateLimit     UserRateLimit?
+  consents      UserConsent[]
 
   @@map("users")
+}
+
+model UserConsent {
+  id          String      @id @default(cuid())
+  userId      String
+  consentType ConsentType
+  consentId   String
+  accepted    Boolean     @default(false)
+  acceptedAt  DateTime?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  consent Consent @relation(fields: [consentId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, consentId])
+  @@index([userId])
+  @@index([consentId])
+  @@map("user_consents")
+}
+
+model Consent {
+  id           String        @id @default(cuid())
+  consentType  ConsentType
+  version      String
+  content      String        @db.Text
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  userConsents UserConsent[]
+
+  @@unique([consentType, version])
+  @@map("consents")
 }
 
 model Outage {
@@ -137,4 +170,12 @@ enum OutageWhatHappened {
   FLICKERING
   HAZARDOUS_SITUATION
   OTHER
+}
+
+enum ConsentType {
+  PRIVACY_POLICY
+  TERMS_AND_CONDITIONS
+  DATA_COLLECTION
+  LOCATION_SHARING
+  EMAIL_NOTIFICATIONS
 }

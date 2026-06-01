@@ -6,12 +6,13 @@ import { User } from "../generated/prisma/client";
 export class AuthController {
   async register(req: Request, res: Response) {
     try {
-      const { email, password, name, phoneNumber } = req.body;
+      const { email, password, name, phoneNumber, consents } = req.body;
       const response = await authServices.register({
         email,
         password,
         phoneNumber,
         name,
+        consents,
       });
       res
         .status(201)

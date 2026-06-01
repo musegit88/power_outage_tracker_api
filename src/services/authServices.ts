@@ -1,4 +1,4 @@
-import { UserRole } from "../generated/prisma/enums";
+import { ConsentType, UserRole } from "../generated/prisma/enums";
 import prisma from "../config/database";
 import bcrypt from "bcrypt";
 import jwt, { JwtPayload } from "jsonwebtoken";
@@ -31,11 +31,16 @@ export class AuthServices {
     password,
     phoneNumber,
     name,
+    consents,
   }: {
     email: string;
     password: string;
     phoneNumber: string;
     name: string;
+    consents: {
+      consentType: ConsentType;
+      accepted: boolean;
+    }[];
   }) {
     // check if user already exists
     const existingUser = await prisma.user.findUnique({
@@ -67,8 +72,45 @@ export class AuthServices {
       },
     });
 
-    // generate token
+    // Get current version of consents
+    const versions = await prisma.consent.findMany({
+      where: {
+        consentType: { in: consents.map((consent) => consent.consentType) },
+      },
+    });
+    console.log("Consent versions", versions);
 
+    // create user consents when user registers
+    await Promise.all(
+      consents.map(async (consent) => {
+        const matchedConsent = versions.find(
+          (v) => v.consentType === consent.consentType,
+        );
+        if (!matchedConsent) {
+          throw new Error(
+            `No consent record found for type: ${consent.consentType}`,
+          );
+        }
+        return prisma.userConsent.create({
+          data: {
+            user: { connect: { id: user.id } },
+            consentType: consent.consentType,
+            accepted: consent.accepted,
+            acceptedAt: new Date(),
+            consent: {
+              connect: {
+                consentType_version: {
+                  consentType: consent.consentType,
+                  version: matchedConsent.version,
+                },
+              },
+            },
+          },
+        });
+      }),
+    );
+
+    // generate token
     const token = this.generateToken(user.id, user.role);
 
     return {
