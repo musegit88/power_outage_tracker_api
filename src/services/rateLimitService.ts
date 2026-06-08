@@ -14,11 +14,26 @@ export class RateLimitService {
     },
   };
 
+  // Check if user is unrestricted
+  private isUnrestricted(role?: string) {
+    return role === "SUPER_ADMIN";
+  }
+
   // check if user can perform an action (create outage or confirm)
   async checkRateLimit(
     userId: string,
     type: RateLimitType,
+    role?: string,
   ): Promise<RateLimitStatus> {
+    // Check if user is unrestricted
+    if (this.isUnrestricted(role)) {
+      return {
+        allowed: true,
+        remaining: Infinity,
+        resetAt: new Date(0),
+        message: "Unrestricted user - no rate limits apply",
+      };
+    }
     // Get or create rate limit record
     const rateLImit = await this.getOrCreateRateLimit(userId);
 

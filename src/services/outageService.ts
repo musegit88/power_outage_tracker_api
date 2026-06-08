@@ -39,12 +39,22 @@ export class OutageService {
   }
   // create outage
   async createOutage(outageData: CreateOutage) {
+    // get user role
+    const role = await prisma.user.findUnique({
+      where: {
+        id: outageData.userId,
+      },
+      select: {
+        role: true,
+      },
+    });
+
     // check rate limit before creating outage
     const rateLimitStatus = await rateLimitService.checkRateLimit(
       outageData.userId,
       RateLimitType.OUTAGE,
+      role?.role,
     );
-
     if (!rateLimitStatus.allowed) {
       // Throw error with rate limit status
       const error = new Error("Rate limit exceeded");
