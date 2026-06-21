@@ -21,8 +21,8 @@ model User {
   comments      Comment[]
   confirmations Confirmation[]
   outages       Outage[]
-  rateLimit     UserRateLimit?
   consents      UserConsent[]
+  rateLimit     UserRateLimit?
 
   @@map("users")
 }
@@ -36,9 +36,8 @@ model UserConsent {
   acceptedAt  DateTime?
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
-
-  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  consent Consent @relation(fields: [consentId], references: [id], onDelete: Cascade)
+  consent     Consent     @relation(fields: [consentId], references: [id], onDelete: Cascade)
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, consentId])
   @@index([userId])
@@ -50,7 +49,7 @@ model Consent {
   id           String        @id @default(cuid())
   consentType  ConsentType
   version      String
-  content      String        @db.Text
+  content      String
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
   userConsents UserConsent[]
@@ -117,20 +116,15 @@ model Comment {
 }
 
 model UserRateLimit {
-  id     String @id @default(cuid())
-  userId String @unique
-
-  // Outage creation rate limiting
-  outageCount         Int       @default(0)
-  lastOutageCreatedAt DateTime?
-
-  // Confirmation rate limiting
+  id                        String    @id @default(cuid())
+  userId                    String    @unique
+  outageCount               Int       @default(0)
+  lastOutageCreatedAt       DateTime?
   confirmationCount         Int       @default(0)
   lastConfirmationCreatedAt DateTime?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt                 DateTime  @default(now())
+  updatedAt                 DateTime  @updatedAt
+  user                      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@map("user_rate_limits")
