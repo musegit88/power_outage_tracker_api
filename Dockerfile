@@ -7,7 +7,6 @@ WORKDIR /app
 COPY package*.json ./
 COPY tsconfig.json ./
 COPY prisma ./prisma/
-COPY prisma.config.ts ./
 
 # Install all dependencies
 RUN npm ci
@@ -27,24 +26,14 @@ WORKDIR /app
 # Install dumb-init for proper signal handling
 RUN apk add --no-cache dumb-init
 
-# Create non-root user
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nodejs -u 1001
-
 # Copy package files and production dependencies from builder
-COPY --from=builder --chown=nodejs:nodejs /app/package*.json ./
-COPY --from=builder --chown=nodejs:nodejs /app/node_modules ./node_modules
-COPY --from=builder --chown=nodejs:nodejs /app/prisma ./prisma
+COPY --from=builder /app/package*.json ./
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/prisma ./prisma
+COPY prisma.config.ts ./
 
 # Copy compiled application from builder
-COPY --from=builder --chown=nodejs:nodejs /app/dist ./dist
-
-# Copy entrypoint script
-COPY --chown=nodejs:nodejs ./entrypoint.sh ./entrypoint.sh
-RUN chmod +x ./entrypoint.sh
-
-# Switch to non-root user
-USER nodejs
+COPY --from=builder /app/dist ./dist
 
 # Expose port
 EXPOSE 3004
@@ -53,4 +42,4 @@ EXPOSE 3004
 ENTRYPOINT ["dumb-init", "--"]
 
 # Run migrations and start app
-CMD ["./entrypoint.sh"]
+CMD ["sh", "-c", "npx prisma migrate deploy --config ./prisma.config.ts && node dist/index.js"]

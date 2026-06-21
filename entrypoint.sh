@@ -2,7 +2,7 @@
 set -e
 
 echo "Running Prisma migrations..."
-npx prisma migrate deploy
+npx prisma migrate deploy --config ./prisma.config.ts
 
-echo "Starting application..."
-exec node dist/index.js
+echo "Starting application as nodejs user..."
+exec su-exec nodejs node dist/index.js

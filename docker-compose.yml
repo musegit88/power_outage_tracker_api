@@ -7,7 +7,9 @@ services:
       - "3004:3004"
     environment:
       - NODE_ENV=production
-      - DATABASE_URL=postgresql://postgres:podoes@db:5432/power_outage_api
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN}
     depends_on:
       db:
         condition: service_healthy
@@ -20,13 +22,13 @@ services:
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=podoes
-      - POSTGRES_DB=power_outage_api
+      - POSTGRES_DB=power_outage_api_db
     ports:
       - "5434:5432"
     volumes:
       - db-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
       interval: 10s
       timeout: 5s
       retries: 5
