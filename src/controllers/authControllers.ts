@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import authServices from "../services/authServices";
 import prisma from "../config/database";
 import { User } from "../generated/prisma/client";
+import tokenService from "../services/tokenService";
 
 export class AuthController {
   async register(req: Request, res: Response) {
@@ -72,6 +73,16 @@ export class AuthController {
       return res.status(500).json({ error: "Failed to fetch profile" });
     }
   }
-}
 
+  async refreshToken(req: Request, res: Response) {
+    try {
+      const { rawToken } = req.body;
+      const { accessToken, refreshToken } = await tokenService.rotateRefreshToken(rawToken);
+      return res.json({ accessToken, refreshToken })
+    } catch (error) {
+      console.error("Refresh token error:", error instanceof Error ? error.message : error);
+      return res.status(401).json({ error: "Failed to refresh token" })
+    }
+  }
+}
 export default new AuthController();

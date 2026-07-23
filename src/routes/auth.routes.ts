@@ -6,6 +6,7 @@ const router = Router();
 
 router.post("/register", authControllers.register);
 router.post("/login", authControllers.login);
+router.post("/refresh", authControllers.refreshToken)
 router.get("/profile", authenticate, authControllers.getProfile);
 
 export default router;

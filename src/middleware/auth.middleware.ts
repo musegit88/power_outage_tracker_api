@@ -1,5 +1,5 @@
+import tokenService from "../services/tokenService";
 import prisma from "../config/database";
-import authServices from "../services/authServices";
 import { Request, Response, NextFunction } from "express";
 
 export const authenticate = async (
@@ -13,7 +13,7 @@ export const authenticate = async (
       return res.status(401).json({ message: "Unauthorized" });
     }
     const token = authHeader.substring(7);
-    const decodedToken = authServices.verifyToken(token);
+    const decodedToken = tokenService.verifyToken(token);
     if (!decodedToken) {
       return res.status(401).json({ message: "Unauthorized" });
     }

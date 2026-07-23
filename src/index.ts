@@ -1,7 +1,9 @@
+import "dotenv/config";
 import express from "express";
 import helmet from "helmet";
 import cors from "cors";
-import dotenv from "dotenv";
+
+import "./jobs/cleanUpTokens"
 
 import authRoutes from "./routes/auth.routes";
 import outageRoutes from "./routes/outage.routes";
@@ -10,8 +12,6 @@ import fs from "node:fs";
 import path from "node:path";
 import { createServer } from "http";
 import socketService from "./socket";
-
-dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 3004;

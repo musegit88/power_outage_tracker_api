@@ -1,29 +1,17 @@
 import { ConsentType, UserRole } from "../generated/prisma/enums";
 import prisma from "../config/database";
 import bcrypt from "bcrypt";
-import jwt, { JwtPayload } from "jsonwebtoken";
 import { isValidPhoneNumber } from "libphonenumber-js";
+import tokenService from "./tokenService";
 
 export class AuthServices {
-  private readonly JWT_SECRET = process.env.JWT_SECRET!;
-  private readonly JWT_EXPIRES_IN = process.env
-    .JWT_EXPIRES_IN as jwt.SignOptions["expiresIn"];
 
-  // generate token
-  generateToken(userId: string, role: UserRole) {
-    const payload: JwtPayload = {
-      userId,
-      role,
-    };
-    return jwt.sign(payload, this.JWT_SECRET, {
-      expiresIn: this.JWT_EXPIRES_IN,
-    });
+  async issueTokensForUser(userId: string) {
+    const accessToken = tokenService.generateAccessToken(userId)
+    const refreshToken = await tokenService.generateRefreshToken(userId)
+    return { accessToken, refreshToken }
   }
 
-  // verify token
-  verifyToken(token: string) {
-    return jwt.verify(token, this.JWT_SECRET) as JwtPayload;
-  }
 
   // register
   async register({
@@ -111,11 +99,12 @@ export class AuthServices {
     );
 
     // generate token
-    const token = this.generateToken(user.id, user.role);
+    const { accessToken, refreshToken } = await this.issueTokensForUser(user.id)
 
     return {
       user,
-      token,
+      accessToken,
+      refreshToken
     };
   }
 
@@ -138,7 +127,8 @@ export class AuthServices {
     }
 
     // Generate token
-    const token = this.generateToken(user.id, user.role);
+    const { accessToken, refreshToken } = await this.issueTokensForUser(user.id)
+
 
     return {
       user: {
@@ -148,7 +138,8 @@ export class AuthServices {
         phoneNumber: user.phoneNumber,
         role: user.role,
       },
-      token,
+      accessToken,
+      refreshToken
     };
   }
 }
