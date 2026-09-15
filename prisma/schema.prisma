@@ -91,6 +91,7 @@ model Outage {
   comments               Comment[]
   confirmations          Confirmation[]
   user                   User                      @relation(fields: [userId], references: [id])
+  archived               Boolean                   @default(false)
 
   @@index([createdAt(sort: Desc)])
   @@index([latitude, longitude])

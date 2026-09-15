@@ -4,6 +4,7 @@ import helmet from "helmet";
 import cors from "cors";
 
 import "./jobs/cleanUpTokens"
+import "./jobs/archiveOutages"
 
 import authRoutes from "./routes/auth.routes";
 import outageRoutes from "./routes/outage.routes";

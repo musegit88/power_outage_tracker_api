@@ -116,10 +116,12 @@ export class OutageService {
     limit: number = 50,
     offset: number = 0,
     status?: OutageStatus,
+    archived?: boolean
   ) {
     const outages = await prisma.outage.findMany({
       where: {
         status: status ? status : {},
+        archived,
       },
       take: limit,
       skip: offset,
@@ -339,6 +341,24 @@ export class OutageService {
       resolvedTodayCount,
       totalCount,
     };
+  }
+
+  // Archive resolved outages (run via cron job)
+  async archiveResolvedOutages() {
+    const originalDate = new Date();
+    // Get the start of the day
+    const startOfDay = new Date(originalDate.setHours(0, 0, 0, 0));
+
+    const outages = await prisma.outage.updateMany({
+      where: {
+        status: OutageStatus.RESOLVED,
+        resolvedAt: {
+          lte: startOfDay,
+        }
+      }, data: { archived: true }
+    })
+
+    return outages.count;
   }
 }
 

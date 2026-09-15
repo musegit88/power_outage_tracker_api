@@ -53,13 +53,16 @@ export class OutageController {
     }
   }
 
+
   async getAllOutages(req: Request, res: Response) {
     try {
-      const { status, limit = 50, offset = 0 } = req.query;
+      const { status, limit = 50, offset = 0, archived } = req.query;
+      const archivedBool = archived === undefined ? false : archived === "true";
       const outages = await outageService.getAllOutages(
         Number(limit),
         Number(offset),
         status as OutageStatus,
+        archivedBool
       );
       return res.json({ outages, count: outages.length });
     } catch (error) {
