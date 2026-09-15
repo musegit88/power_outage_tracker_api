@@ -352,11 +352,13 @@ export class OutageService {
     const outages = await prisma.outage.updateMany({
       where: {
         status: OutageStatus.RESOLVED,
+        archived: false,
         resolvedAt: {
           lte: startOfDay,
-        }
-      }, data: { archived: true }
-    })
+        },
+      },
+      data: { archived: true },
+    });
 
     return outages.count;
   }
